@@ -88,4 +88,13 @@ int main()
 	BoardMatrix m{ false };
 
 	bool found = findSolution(m, 0);
+	if (found)
+	{
+		cout << "Found solution:" << endl;
+		for (unsigned i = 0; i < 8; ++i)
+		{
+			for_each(m[i].begin(), m[i].end(), [](bool b) { cout << (b ? 'Q' : '*'); });
+			cout << endl;
+		}
+	}
 }
