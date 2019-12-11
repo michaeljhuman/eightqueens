@@ -14,41 +14,52 @@
 
 using namespace std;
 
-using BoardMatrix = std::array<std::array<bool, 8>, 8>;
+const unsigned MaxRows = 8;
+const unsigned MaxCols = 8;
+
+using BoardMatrix = std::array<std::array<bool, MaxRows>, MaxCols>;
 using Coord = std::pair<unsigned, unsigned>;
 using Delta = std::pair<unsigned, unsigned>;
 using IndexSet = set<unsigned>;
 
-// Valid diagonals is simple, because we can assume only the current row may have created an invalid diagonal
-// So we just look at upper left and upper right position.
-bool validDiagonals(BoardMatrix &m, int row, int col)
+bool validDiagonal(BoardMatrix &b, int row, int col,
+	int deltaRow, int deltaCol)
 {
-	if (row - 1 < 0)
-		return true;
-	if (col - 1 >= 0)
-		if (m[row - 1][col - 1])
+	while (row >= 0 && col >= 0 && col < MaxCols)
+	{
+		if ( b[row][col])
 			return false;
-	if (col + 1 < 8)
-		if (m[row - 1][col + 1])
-			return false;
+		row += deltaRow;
+		col += deltaCol;
+	}
+
 	return true;
 }
 
-bool findSolution( BoardMatrix &m, IndexSet &used, unsigned row)
+// Check left and right digaonal starting from (row, col)
+bool validDiagonals(BoardMatrix &b, int row, int col)
 {
-	if (row >= 8)
-		return true;
+	if (!validDiagonal(b, row - 1, col - 1, -1, -1))
+		return false;
+	if (!validDiagonal(b, row - 1, col + 1, -1, 1))
+		return false;
 
-	// Possible optimzation would be to dynamically add and remove to/from the set ( as opposed to rebuilding it every time)
+	return true;
+}
+
+bool findSolution( BoardMatrix &b, IndexSet &used, unsigned row)
+{
+	if (row >= MaxRows)
+		return true;
 
 	int col = 0;
 	// Loop over unused positions in current row, searching
 	// for a valid solution
-	while (col < 8)
+	while (col < MaxCols)
 	{
 		// Choose next unused
 		set<unsigned>::iterator it;
-		for (; col < 8; ++col)
+		for (; col < MaxCols; ++col)
 		{
 			it = used.find(col);
 			if (it == used.end())
@@ -60,14 +71,14 @@ bool findSolution( BoardMatrix &m, IndexSet &used, unsigned row)
 		// Check if this position results in a potential solution
 		// If the the solution is not invalid, recursively search
 		// for a valid solution for remaining rows
-		m[row].fill(false);
-		m[row][col] = true;
-		if (validDiagonals(m, row, col))
+		b[row].fill(false);
+		b[row][col] = true;
+		if (validDiagonals(b, row, col))
 		{
-			if (row == 7)
+			if (row == MaxRows - 1)
 				return true;
 			used.insert( col);
-			if (findSolution(m, used, row + 1))
+			if (findSolution(b, used, row + 1))
 			{
 				return true;
 			}
@@ -81,16 +92,16 @@ bool findSolution( BoardMatrix &m, IndexSet &used, unsigned row)
 
 int main()
 {
-	BoardMatrix m{ false };
+	BoardMatrix b { false };
 	IndexSet used; // Used indexes
 
-	bool found = findSolution(m, used, 0);
+	bool found = findSolution( b, used, 0);
 	if (found)
 	{
 		cout << "Found solution:" << endl;
-		for (unsigned i = 0; i < 8; ++i)
+		for (unsigned i = 0; i < MaxRows; ++i)
 		{
-			for_each(m[i].begin(), m[i].end(), [](bool b) { cout << (b ? 'Q' : '*'); });
+			for_each( b[i].begin(), b[i].end(), [](bool b) { cout << (b ? 'Q' : '*'); });
 			cout << endl;
 		}
 	}
